@@ -4,43 +4,53 @@ require_once("bootstrap.php");
 
 $syncedKeys = [];
 
-$remote = $redis['TO'];
-$local = $redis['FROM'];
+$redisTo = $redis['TO'];
+$redisFrom = $redis['FROM'];
 
-foreach($local->keys("*") as $key){
-    $type = $local->type($key);
+echo "Checking for keys to sync...\n";
+$keysToSync = $redisFrom->keys("*");
+echo "Found " . count($keysToSync) . " keys to sync.\n";
+$time = microtime(true);
+$processed = 0;
+shuffle($keysToSync);
+foreach($keysToSync as $key){
+    $processed++;
+    $type = $redisFrom->type($key);
     switch($type){
 
         case 'string':
-            $remote->set($key, $local->get($key));
+            $redisTo->set($key, $redisFrom->get($key));
             break;
 
         case 'list':
-            $remote->lpush($key, $local->lpop($key));
+            $redisTo->lpush($key, $redisFrom->lpop($key));
             break;
 
         case 'set':
-            foreach($local->smembers($key) as $member) {
-                $remote->sadd($key, $member);
+            foreach($redisFrom->smembers($key) as $member) {
+                $redisTo->sadd($key, $member);
             }
             break;
 
         case 'hash':
-            $remote->hmset($key, $local->hgetall($key));
+            $redisTo->hmset($key, $redisFrom->hgetall($key));
             break;
 
         default:
             die("Unsupported type: {$type}\n\n\n");
     }
+    if($time < microtime(true) - 1){
+        echo "Processed: {$processed} of " . count($keysToSync) . "\n";
+        $time = microtime(true);
+    }
 
-    //$remote->execute();
     $syncedKeys[] = $key;
 }
 
 if(isset($environment['DELETE_ON_COPY']) && $environment['DELETE_ON_COPY'] == true){
     echo "Synced and cleared " . count($syncedKeys) . " keys\n";
     if(count($syncedKeys) > 0){
-        $local->del($syncedKeys);
+        $redisFrom->del($syncedKeys);
     }
 }else{
     echo "Synced " . count($syncedKeys) . " keys\n";

@@ -4,7 +4,7 @@ require_once("vendor/autoload.php");
 $environment = array_merge($_ENV, $_SERVER);
 ksort($environment);
 
-$locations = ['LOCAL', 'REMOTE'];
+$locations = ['TO', 'FROM'];
 /** @var \Predis\Client[] $redis */
 $redis = [];
 foreach($locations as $location) {
