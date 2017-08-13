@@ -38,6 +38,7 @@ foreach($keysToSync as $key){
                 foreach($redisFrom->hkeys($key) as $field){
                     echo " > Setting {$key} -> {$field}\n";
                     $redisTo->hset($key, $field, $redisFrom->hget($key, $field));
+                    $redisFrom->hdel($key, [$field]);
                 }
             }else {
                 $redisTo->hmset($key, $redisFrom->hgetall($key));
