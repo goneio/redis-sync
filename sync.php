@@ -33,7 +33,7 @@ foreach($keysToSync as $key){
             break;
 
         case 'hash':
-            if($redisFrom->hlen($key) > 1000){
+            if($redisFrom->hlen($key) > 10){
                 echo "Found a giant hashmap. Syncing in parts.\n";
                 foreach($redisFrom->hkeys($key) as $field){
                     echo " > Setting {$key} -> {$field}\n";
