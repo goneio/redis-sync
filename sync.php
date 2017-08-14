@@ -33,15 +33,11 @@ foreach($keysToSync as $key){
             break;
 
         case 'hash':
-            if($redisFrom->hlen($key) > 10){
-                echo "Found a giant hashmap. Syncing in parts.\n";
-                foreach($redisFrom->hkeys($key) as $field){
-                    echo " > Setting {$key} -> {$field}\n";
-                    $redisTo->hset($key, $field, $redisFrom->hget($key, $field));
-                    $redisFrom->hdel($key, [$field]);
-                }
-            }else {
-                $redisTo->hmset($key, $redisFrom->hgetall($key));
+            echo "{$key} is a hashmap. Syncing in parts.\n";
+            foreach($redisFrom->hkeys($key) as $field){
+                echo " > Setting {$key} -> {$field}\n";
+                $redisTo->hset($key, $field, $redisFrom->hget($key, $field));
+                $redisFrom->hdel($key, [$field]);
             }
             break;
 
